@@ -15,11 +15,39 @@ from generator.svg import comet, frame, num, path_def, star, star_defs
 from generator.typeset import Typesetter, measure, wrap
 
 MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-CAPTION = "contributions in the last year"
-EMPTY = "No contribution data yet"
-# config key -> (singular, plural); "commits" is the title itself and is never listed
-LABELS = {"stars": ("star", "stars"), "prs": ("pull request", "pull requests"),
-          "issues": ("issue", "issues"), "repos": ("repository", "repositories")}
+ZH_MONTHS = tuple(f"{month}月" for month in range(1, 13))
+CHART_TEXT = {
+    "en": {
+        "title": "Contributions",
+        "caption": "contributions in the last year",
+        "empty": "No contribution data yet",
+        "total": "{count:,} contributions in the last year",
+        "busiest": "busiest week: {peak}",
+        "peak": "{count:,} in the week of {month} {day}",
+        "rate": "{count:,} a week",
+        "months": MONTHS,
+        "mobile_months": tuple(month[0] for month in MONTHS),
+        "metrics": {"stars": ("star", "stars"), "prs": ("pull request", "pull requests"),
+                    "issues": ("issue", "issues"), "repos": ("repository", "repositories")},
+        "separator": "; ",
+        "period": ".",
+    },
+    "zh-CN": {
+        "title": "GitHub 贡献曲线",
+        "caption": "过去一年贡献次数",
+        "empty": "暂无贡献记录",
+        "total": "过去一年共 {count:,} 次贡献",
+        "busiest": "贡献最多的一周为 {peak}",
+        "peak": "{month}{day}日当周 · {count:,} 次",
+        "rate": "每周 {count:,} 次",
+        "months": ZH_MONTHS,
+        "mobile_months": ZH_MONTHS,
+        "metrics": {"stars": ("星标", "星标"), "prs": ("拉取请求", "拉取请求"),
+                    "issues": ("议题", "议题"), "repos": ("仓库", "仓库")},
+        "separator": "，",
+        "period": "。",
+    },
+}
 MAX_NUMBERS = 3
 PEAK_STAR = 6                     # the peak is drawn as bright as a repository with this many stargazers
 PEAK_REACH = 12                   # pixels around the peak's star that other text keeps off
@@ -69,29 +97,29 @@ def reference_levels(peak: int) -> list:
     return [best, best * 2]
 
 
-def _numbers(counters: dict, metrics: list) -> list:
+def _numbers(counters: dict, metrics: list, labels: dict) -> list:
     """[(value, label)] for up to three counters the data has, in the order of the config."""
     out = []
     for key in metrics:
         value = counters.get(key)
-        if key in LABELS and isinstance(value, int) and not isinstance(value, bool):
-            out.append((f"{value:,}", LABELS[key][0 if value == 1 else 1]))
+        if key in labels and isinstance(value, int) and not isinstance(value, bool):
+            out.append((f"{value:,}", labels[key][0 if value == 1 else 1]))
     return out[:MAX_NUMBERS]
 
 
-def _summary(series, numbers: list) -> str:
+def _summary(series, numbers: list, text: dict) -> str:
     parts = []
     if series:
         values, dates, total, peak = series
-        parts.append(f"{total:,} {CAPTION}")
+        parts.append(text["total"].format(count=total))
         if values[peak]:
-            parts.append(f"busiest week: {_peak_text(values[peak], dates[peak])}")
+            parts.append(text["busiest"].format(peak=_peak_text(values[peak], dates[peak], text)))
     parts += [f"{value} {label}" for value, label in numbers]
-    return ("; ".join(parts) or EMPTY) + "."
+    return (text["separator"].join(parts) or text["empty"]) + text["period"]
 
 
-def _peak_text(value: int, day) -> str:
-    return f"{value:,} in the week of {MONTHS[day.month - 1]} {day.day}"
+def _peak_text(value: int, day, text: dict) -> str:
+    return text["peak"].format(count=value, month=text["months"][day.month - 1], day=day.day)
 
 
 def _top_of_chart(px: float, py: float, span: float, levels: list, x0: float, x1: float) -> tuple:
@@ -130,12 +158,12 @@ def _top_of_chart(px: float, py: float, span: float, levels: list, x0: float, x1
     return "left", left or right or (x0, "start"), kept
 
 
-def _numbers_only(numbers: list, theme, mobile: bool, ts: Typesetter) -> tuple:
+def _numbers_only(numbers: list, theme, mobile: bool, ts: Typesetter, empty: str) -> tuple:
     """(height, body) of the short plate: one column per counter."""
     width, margin = (390, 24) if mobile else (850, 44)
     height = 110 if mobile else 120
     if not numbers:
-        return height, ts.line(margin, height / 2 + 6, EMPTY, 16, theme.mute, "italic")
+        return height, ts.line(margin, height / 2 + 6, empty, 16, theme.mute, "italic")
     column = (width - 2 * margin) / MAX_NUMBERS
     size, label_size = (28, 13) if mobile else (36, 15)
     top = height / 2 + (2 if mobile else 4)
@@ -147,14 +175,16 @@ def _numbers_only(numbers: list, theme, mobile: bool, ts: Typesetter) -> tuple:
     return height, "".join(body)
 
 
-def render(series, counters: dict, metrics: list, theme, mobile: bool = False, motion: bool = True) -> str:
+def render(series, counters: dict, metrics: list, theme, mobile: bool = False, motion: bool = True,
+           *, locale: str = "en") -> str:
     """series is what model.weekly_series returns, or None without a calendar."""
     mo, ts = Motion(motion), Typesetter()
-    numbers = _numbers(counters, metrics)
+    text = CHART_TEXT[locale]
+    numbers = _numbers(counters, metrics, text["metrics"])
     width = 390 if mobile else 850
     if not series:
-        height, body = _numbers_only(numbers, theme, mobile, ts)
-        return frame(theme, width, height, body, "Contributions", _summary(None, numbers), ts.defs(), mo)
+        height, body = _numbers_only(numbers, theme, mobile, ts, text["empty"])
+        return frame(theme, width, height, body, text["title"], _summary(None, numbers, text), ts.defs(), mo)
 
     values, dates, total, peak = series
     height = 266 if mobile else 254
@@ -172,14 +202,14 @@ def render(series, counters: dict, metrics: list, theme, mobile: bool = False, m
 
     # the total, as large as the line allows, and its caption right after it
     title_y, caption_size = (48, 14.5) if mobile else (52, 17)
-    caption_width = measure(CAPTION, caption_size, "italic")
+    caption_width = measure(text["caption"], caption_size, "italic")
     size = 32 if mobile else 38
     while size > 22 and x0 + measure(f"{total:,}", size, "light") + 10 + caption_width > x1:
         size -= 2
     figure = wrap(f"{total:,}", size, "light", x1 - x0, max_lines=1)[0]
     caption_x = x0 + measure(figure, size, "light") + 10
     body.append(ts.line(x0, title_y, figure, size, theme.ink, "light"))
-    caption = wrap(CAPTION, caption_size, "italic", x1 - caption_x, max_lines=1) if x1 - caption_x > 40 else []
+    caption = wrap(text["caption"], caption_size, "italic", x1 - caption_x, max_lines=1) if x1 - caption_x > 40 else []
     if caption:
         body.append(ts.line(caption_x, title_y, caption[0], caption_size, theme.mute, "italic"))
     title_end = caption_x + (measure(caption[0], caption_size, "italic") if caption else 0)
@@ -232,12 +262,13 @@ def render(series, counters: dict, metrics: list, theme, mobile: bool = False, m
     body.append(comet("cv", theme, mo, cycle=12, start=3.4))
 
     # the peak is a star, named beside it
-    peak_text = _peak_text(most, dates[peak]) if most else ""
+    peak_text = _peak_text(most, dates[peak], text) if most else ""
+    level_labels = {level: text["rate"].format(count=level) for level in levels}
     side, (label_x, anchor), shown = _top_of_chart(
         at_x(peak), at_y(most), measure(peak_text, PEAK_SIZE) if most else 0,
-        [(level, at_y(level) - 5, measure(f"{level:,} a week", LEVEL_SIZE)) for level in levels], x0, x1)
+        [(level, at_y(level) - 5, measure(label, LEVEL_SIZE)) for level, label in level_labels.items()], x0, x1)
     for level in shown:
-        body.append(ts.line(x0 if side == "left" else x1, at_y(level) - 5, f"{level:,} a week", LEVEL_SIZE, theme.mute,
+        body.append(ts.line(x0 if side == "left" else x1, at_y(level) - 5, level_labels[level], LEVEL_SIZE, theme.mute,
                             anchor="start" if side == "left" else "end"))
     if most:
         px, py = at_x(peak), at_y(most)
@@ -246,14 +277,15 @@ def render(series, counters: dict, metrics: list, theme, mobile: bool = False, m
         body.append(ts.line(label_x, py + 4, peak_text, PEAK_SIZE, theme.ink, "regular", anchor,
                             mo.cls("soft", delay=peak * STAGGER + 0.5)))
 
-    # month marks: three letters on desktop, the initial on mobile
+    # month marks use shorter names on mobile where the locale has them
+    months = text["mobile_months" if mobile else "months"]
     month = dates[0].month
     for i, day in enumerate(dates):
         if day.month != month:
             month = day.month
-            name = MONTHS[month - 1]
+            name = months[month - 1]
             body.append(f'<path d="M{num(at_x(i))} {base}v5" stroke="{theme.mute}"/>')
-            body.append(ts.line(at_x(i), base + 20, name[0] if mobile else name, MONTH_SIZE, theme.mute, anchor="middle"))
+            body.append(ts.line(at_x(i), base + 20, name, MONTH_SIZE, theme.mute, anchor="middle"))
 
     defs.append(ts.defs())
-    return frame(theme, width, height, "".join(body), "Contributions", _summary(series, numbers), "".join(defs), mo)
+    return frame(theme, width, height, "".join(body), text["title"], _summary(series, numbers, text), "".join(defs), mo)

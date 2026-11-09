@@ -173,6 +173,8 @@ def validate_config(config: dict) -> dict:
 
     # stats and languages — optional sections; one left empty in the YAML arrives as None
     stats = _section(config, "stats")
+    if stats.get("locale", "en") not in ("en", "zh-CN"):
+        raise ConfigError("'stats.locale' must be 'en' or 'zh-CN'.")
     metrics = stats.get("metrics")
     if metrics is None:
         metrics = list(DEFAULT_METRICS)

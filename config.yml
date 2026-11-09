@@ -26,4 +26,5 @@ theme:
 motion: true
 
 stats:
+  locale: zh-CN
   metrics: [prs, stars]

@@ -16,7 +16,7 @@ RENDERERS = {
         galaxy.render(model.galaxy(snap, config), config["profile"], theme, mobile, motion, seed=snap.login),
     "stats-card": lambda snap, config, theme, mobile, motion:
         contributions.render(model.weekly_series(snap), snap.counters, config["stats"]["metrics"], theme, mobile,
-                             motion),
+                             motion, locale=config["stats"].get("locale", "en")),
     "tech-stack": lambda snap, config, theme, mobile, motion:
         languages.render(model.language_shares(snap, config["languages"]["exclude"],
                                                config["languages"]["max_display"]),
