@@ -2,12 +2,13 @@ username: zhuzihao127-pixel
 
 profile:
   name: zhuzihao127-pixel
-  tagline: Applied AI & Scientific Computing
+  tagline: 应用 AI 与科学计算
+  philosophy: Applied AI & Scientific Computing
 
 galaxy_arms:
-  - name: AI & Inference
+  - name: AI 与推理
     items: [Python]
-  - name: Mathematical Modeling
+  - name: 数学建模
     items: [LaTeX]
 
 projects:
