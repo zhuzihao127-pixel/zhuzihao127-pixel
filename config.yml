@@ -1,0 +1,28 @@
+username: zhuzihao127-pixel
+
+profile:
+  name: zhuzihao127-pixel
+  tagline: Applied AI & Scientific Computing
+
+galaxy_arms:
+  - name: AI & Inference
+    items: [Python]
+  - name: Mathematical Modeling
+    items: [LaTeX]
+
+projects:
+  - repo: zhuzihao127-pixel/submission
+    description: Python inference code.
+    arm: 0
+  - repo: zhuzihao127-pixel/GMCM_LaTeX_overleaf
+    description: An Overleaf template for the 2025 graduate mathematical modeling competition (fork).
+    arm: 1
+
+theme:
+  dark: deep-sky
+  light: deep-sky
+
+motion: true
+
+stats:
+  metrics: [prs, stars]
