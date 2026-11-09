@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
-    <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/zhuzihao127-pixel/zhuzihao127-pixel/main/assets/generated/galaxy-header-mobile.svg?v=observatory-1">
-    <img src="https://raw.githubusercontent.com/zhuzihao127-pixel/zhuzihao127-pixel/main/assets/generated/galaxy-header.svg?v=observatory-1" width="850" alt="zhuzihao127-pixel 的动态开源星图，两条旋臂分别是 AI 与推理、数学建模">
+    <source media="(max-width: 600px)" srcset="./assets/generated/observatory-header-mobile.svg">
+    <img src="./assets/generated/observatory-header.svg" width="850" alt="zhuzihao127-pixel 的动态开源星图，两条旋臂分别是 AI 与推理、数学建模">
   </picture>
 </div>
 

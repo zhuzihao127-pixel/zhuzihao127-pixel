@@ -19,7 +19,7 @@ htmlcov/
 
 # Track the SVG variants used by the profile README.
 assets/generated/*.svg
-!assets/generated/galaxy-header.svg
-!assets/generated/galaxy-header-mobile.svg
+!assets/generated/observatory-header.svg
+!assets/generated/observatory-header-mobile.svg
 !assets/generated/stats-card.svg
 !assets/generated/stats-card-mobile.svg

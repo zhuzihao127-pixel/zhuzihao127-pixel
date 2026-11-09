@@ -31,6 +31,8 @@ def render_all(config: dict, snap) -> dict:
     themes = config["themes"]
     files = {}
     for stem, render in RENDERERS.items():
+        if stem == "galaxy-header" and config["profile"].get("observatory"):
+            stem = "observatory-header"
         for suffix, mode, mobile in VARIANTS:
             theme = get_theme(themes[mode], mode, themes["overrides"])
             files[f"{stem}{suffix}.svg"] = render(snap, config, theme, mobile, config["motion"])

@@ -7,3 +7,4 @@ This repository adds a profile-specific README, configuration, generated SVGs, a
 The contribution chart supports Simplified Chinese via `stats.locale: zh-CN` in `config.yml`. The default locale is `en`.
 
 Set `profile.observatory: true` to add the gradient background and animated orbit to the galaxy header. The orbit respects the existing motion setting and the visitor's reduced-motion preference.
+This style is generated as `observatory-header*.svg` so it has distinct URLs from the classic header.
