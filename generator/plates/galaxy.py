@@ -19,7 +19,7 @@ import random
 
 from generator.model import recency
 from generator.motion import Motion
-from generator.svg import PARTICLE_GROUP, clean, dots, dots_d, frame, num, spike_half, star, star_defs
+from generator.svg import PARTICLE_GROUP, clean, comet, dots, dots_d, frame, num, path_def, spike_half, star, star_defs
 from generator.typeset import Typesetter, covers, font, measure, wrap
 
 PHI = math.pi / 3                 # tile step along an arm
@@ -409,6 +409,42 @@ def _identity(profile: dict, theme, geo: Geometry, ts: Typesetter) -> tuple:
                    for x, base, text, text_size, fill, style in lines), boxes
 
 
+def _observatory(geo: Geometry, theme, motion: Motion) -> tuple[str, str]:
+    """Gradient haze and a timed orbit around the existing star field."""
+    mobile = geo.width < 500
+    left, label_y, rule_y = (24, 24, 102) if mobile else (44, 139, 245)
+    rx, ry = (155, 64) if mobile else (180, 71)
+    violet = "#a58aff" if theme.dark else "#6750b4"
+    haze_opacity = ".34" if theme.dark else ".22"
+    orbit = f"M{-rx} 0a{rx} {ry} 0 1 0 {2 * rx} 0a{rx} {ry} 0 1 0 {-2 * rx} 0Z"
+    defs = (
+        '<radialGradient id="nebula">'
+        f'<stop stop-color="{theme.now}" stop-opacity="{haze_opacity}"/>'
+        f'<stop offset=".48" stop-color="{violet}" stop-opacity=".14"/>'
+        f'<stop offset="1" stop-color="{violet}" stop-opacity="0"/></radialGradient>'
+        '<linearGradient id="signal" x2="100%" y2="15%">'
+        f'<stop stop-color="{theme.now}"/><stop offset=".55" stop-color="{violet}"/>'
+        f'<stop offset="1" stop-color="{violet}" stop-opacity=".12"/></linearGradient>'
+        + path_def("orbit-track", orbit)
+    )
+    trail = comet("orbit-track", theme, motion, cycle=17, start=T_IN + .8, tail=.075, scale=.72)
+    body = (
+        '<g aria-hidden="true">'
+        f'<g transform="translate({geo.cx} {geo.cy}) rotate(-19)">'
+        f'<ellipse rx="{rx + 25}" ry="{ry + 69}" fill="url(#nebula)"{motion.cls("breathe", duration=16)}/>'
+        f'<g{motion.cls("soft", delay=.65, duration=1.7)}>'
+        f'<ellipse rx="{rx - 12}" ry="{ry - 13}" fill="none" stroke="{theme.faint}" '
+        'stroke-width=".7" stroke-dasharray="1 5"/>'
+        '<use href="#orbit-track" stroke="url(#signal)" stroke-width=".8" stroke-opacity=".49"/>'
+        f'</g>{trail}</g>'
+        f'<text x="{left}" y="{label_y}" fill="{theme.mute}" font-size="10" '
+        'font-family="monospace" letter-spacing="1.6">开源星图 · OPEN SOURCE ATLAS</text>'
+        f'<g transform="translate({left} {rule_y})"><rect width="126" height="2" rx="1" fill="url(#signal)"'
+        f'{motion.cls("grow", delay=.15, duration=1.7)}/></g></g>'
+    )
+    return defs, body
+
+
 def _sky(geo: Geometry, theme, rng, motion) -> str:
     """A sparse field of faint stars behind everything; a few of them twinkle."""
     colour = theme.haze if theme.dark else theme.mute
@@ -529,6 +565,11 @@ def _compose(model, profile: dict, theme, mobile: bool, motion: bool, seed: str,
     body = [sky,
             f'<g transform="translate({geo.cx} {geo.cy})" {PARTICLE_GROUP}><circle{mo.cls("ignite")} r="{num(geo.radius * 0.5)}" '
             f'fill="url(#cg)"/><g{mo.cls("arrive")}>{dust_body}</g>{actors}</g>']
+
+    if profile.get("observatory", False):
+        accent_defs, accents = _observatory(geo, theme, mo)
+        defs.append(accent_defs)
+        body.insert(0, accents)
 
     # stars appear in the order their repositories were created
     order = [name for name in model.order if name in positions]

@@ -5,3 +5,5 @@ The generator and its associated tools come from [vinimlo/galaxy-profile](https:
 This repository adds a profile-specific README, configuration, generated SVGs, and a refresh workflow. Run `pip install -r requirements.txt` and `python -m generator.main` from the repository root to regenerate the SVGs.
 
 The contribution chart supports Simplified Chinese via `stats.locale: zh-CN` in `config.yml`. The default locale is `en`.
+
+Set `profile.observatory: true` to add the gradient background and animated orbit to the galaxy header. The orbit respects the existing motion setting and the visitor's reduced-motion preference.

@@ -4,6 +4,7 @@ profile:
   name: zhuzihao127-pixel
   tagline: 应用 AI 与科学计算
   philosophy: Applied AI & Scientific Computing
+  observatory: true
 
 galaxy_arms:
   - name: AI 与推理
